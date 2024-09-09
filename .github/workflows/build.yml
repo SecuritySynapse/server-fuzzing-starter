@@ -1,0 +1,87 @@
+# Basic workflow
+name: build
+
+# Use more columns for terminal output
+env:
+  COLUMNS: 120
+  PYTHONIOENCODING: utf8
+
+# Controls when the action will run
+# Workflow begins with push or PR events
+# Focuses on the main branch only
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Create one single job
+# This job performs all of the necessary checks
+jobs:
+  build:
+    # Use the latest version of Ubuntu, MacOS, and Windows
+    # Use the latest and most stable version of Python
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.12"]
+        include:
+          - os: macos-latest
+            python-version: "3.12"
+          - os: windows-latest
+            python-version: "3.12"
+    # Define the workflow steps
+    steps:
+    # Checkout the code of the repository
+        - name: Check out Repository Code
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: 0
+        # Run the mdl linting tool
+        # Refers to .mdlrc file in repository
+        - name: Run Markdown Linting
+          if: matrix.os == 'ubuntu-latest'
+          uses: actionshub/markdownlint@main
+        # Setup Python for the current language version
+        - name: Setup Python ${{ matrix.python-version }}
+          if: always()
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python-version }}
+        # Install pip
+        - name: Install Pip
+          if: always()
+          run: |
+            python -m pip install --upgrade pip
+        # Install poetry
+        - name: Install Poetry
+          if: always()
+          uses: abatilo/actions-poetry@v2.0.0
+          with:
+            poetry-version: 1.8.3
+        # Install dependencies
+        - name: Install dependencies
+          if: always()
+          run: |
+            cd serverfuzzer
+            poetry install
+        # Run the linters
+        - name: Run Linters
+          if: always()
+          run: |
+            cd serverfuzzer
+            poetry run task lint
+        # Run the program
+        - name: Run program
+          if: always()
+          run: |
+            cd serverfuzzer
+            poetry run serverfuzzer --verbose
+        # Run GatorGrader: see config/gatorgrade.yml
+        - name: Run GatorGrader with GatorGrade
+          if: matrix.os == 'ubuntu-latest'
+          run:  |
+            pip install gatorgrade
+            gatorgrade --config config/gatorgrade.yml --report env md GITHUB_STEP_SUMMARY
