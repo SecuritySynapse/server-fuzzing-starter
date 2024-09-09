@@ -1,0 +1,118 @@
+setup: |
+  echo "🐊 Start to install dependencies ..."
+  echo "🐊 Note: Will not install dependencies if available"
+  cd serverfuzzer && poetry install
+  echo "🐊 ... Done installing dependencies"
+---
+
+# Checks on Files {{{
+
+# perform checks on a file
+- serverfuzzer/serverfuzzer/main.py:
+    - description: Ensure that the main.py file exists in the serverfuzzer/serverfuzzer/ directory
+      check: ConfirmFileExists
+    - description: Complete all TODOs, remove the TODO markers, and rewrite comments for main.py
+      check: MatchFileFragment
+      options:
+        fragment: TODO
+        count: 0
+        exact: true
+    - description: Create a sufficient number of docstring (i.e., multiple-line) comments in main.py
+      check: CountMultipleLineComments
+      options:
+        language: "Python"
+        count: 3
+        exact: false
+    - description: Create a sufficient number of single-line comments in main.py
+      check: CountSingleLineComments
+      options:
+        language: "Python"
+        count: 5
+        exact: false
+
+# perform checks on a file
+- writing/reflection.md:
+    - description: Ensure that the reflection.md file exists in the writing/ directory
+      check: ConfirmFileExists
+    - description: Complete all TODOs, remove the TODO markers, and rewrite comments for the reflection
+      check: MatchFileFragment
+      options:
+        fragment: TODO
+        count: 0
+        exact: true
+    - description: Delete the 'Add Your Name Here' prompt in the reflection file
+      check: MatchFileFragment
+      options:
+        fragment: "Add Your Name Here"
+        count: 0
+        exact: true
+    - description: Retype the every word in the Honor Code pledge in reflection.md
+      check: MatchFileFragment
+      options:
+        fragment: "I adhered to the Allegheny College Honor Code while completing this project."
+        count: 3
+        exact: true
+    - description: Confirm that the markdown file has the correct number of headers
+      check: CountMarkdownTags
+      options:
+        tag: heading
+        count: 15
+        exact: false
+    - description: Confirm that the markdown file has the correct number of fenced code blocks
+      check: CountMarkdownTags
+      options:
+        tag: code_block
+        count: 3
+        exact: false
+
+# }}}
+
+# Check Output {{{
+
+# run a check
+- description: Pass the source code formatting checks run by ruff
+  command: cd serverfuzzer && poetry run task format
+
+# run a check
+- description: Pass the source code linting checks run by ruff
+  command: cd serverfuzzer && poetry run task check
+
+# run a check
+- description: Pass the linting checks run by mypy
+  command: cd serverfuzzer && poetry run task mypy
+
+# run a check
+- description: Pass the linting checks run by pymarkdown
+  command: cd serverfuzzer && poetry run task markdownlint
+
+# run a check
+- description: Pass the undocumented function checks run by symbex
+  command: cd serverfuzzer && poetry run task symbex-documented
+
+# run a check
+- description: Pass the untyped function checks run by symbex
+  command: cd serverfuzzer && poetry run task symbex-typed
+
+# }}}
+
+# Program Output {{{
+
+# run the program and confirm correct number of lines in the output
+- description: Run the program and confirm suitable number of non-blank lines in the output
+  check: CountCommandOutput
+  options:
+    command: 'cd serverfuzzer && poetry run serverfuzzer'
+    count: 2
+    exact: false
+
+# }}}
+
+# Commits {{{
+
+# count number of commits in the GitHub repository
+- description: Have at least a specific minimum of commits in repository
+  check: CountCommits
+  options:
+    count: 10
+
+# }}}
