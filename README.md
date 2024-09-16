@@ -55,7 +55,7 @@ import json
 
 def process_json(json_str: str) -> float:
     """Process a JSON string and return the highest total price among orders."""
-    # load the JSON data by coonverting from a string to a dictionary
+    # load the JSON data by converting from a string to a dictionary
     data = json.loads(json_str)
     # calculate the total price for each order using the
     # price and quantity of each item in the order
